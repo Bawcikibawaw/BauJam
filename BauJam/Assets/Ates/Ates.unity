@@ -128,7 +128,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 282878110}
-  - component: {fileID: 282878111}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -151,24 +150,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &282878111
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 282878108}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e13ad7dc7bfaf2240b35b246ef0858af, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  availableWaypoints:
-  - {fileID: 1632261475}
-  - {fileID: 1080271477}
-  - {fileID: 1050930220}
-  - {fileID: 1567251039}
-  initialDelay: 1
 --- !u!1 &321764570
 GameObject:
   m_ObjectHideFlags: 0
@@ -273,7 +254,6 @@ GameObject:
   - component: {fileID: 748658833}
   - component: {fileID: 748658837}
   - component: {fileID: 748658835}
-  - component: {fileID: 748658836}
   m_Layer: 0
   m_Name: ADAM
   m_TagString: Player
@@ -397,22 +377,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
---- !u!114 &748658836
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 748658832}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 109f95b545e51a441ba9012ce6aaf907, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  rb: {fileID: 0}
-  moveSpeed: 10
-  stopDistance: 0.1
-  isMoving: 0
 --- !u!50 &748658837
 Rigidbody2D:
   serializedVersion: 5
@@ -538,7 +502,6 @@ GameObject:
   - component: {fileID: 1050930223}
   - component: {fileID: 1050930222}
   - component: {fileID: 1050930221}
-  - component: {fileID: 1050930220}
   m_Layer: 0
   m_Name: Trigger (2)
   m_TagString: Untagged
@@ -546,21 +509,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1050930220
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1050930219}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4548cf8e1772ebc4aa08173dc2c0ec1f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  npcWalkToPosition: {fileID: 1050930223}
-  playerTag: Player
-  hasBeenTriggeredByPlayer: 0
 --- !u!61 &1050930221
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -688,7 +636,6 @@ GameObject:
   - component: {fileID: 1080271480}
   - component: {fileID: 1080271479}
   - component: {fileID: 1080271478}
-  - component: {fileID: 1080271477}
   m_Layer: 0
   m_Name: Trigger (1)
   m_TagString: Untagged
@@ -696,21 +643,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1080271477
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1080271476}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4548cf8e1772ebc4aa08173dc2c0ec1f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  npcWalkToPosition: {fileID: 1080271480}
-  playerTag: Player
-  hasBeenTriggeredByPlayer: 0
 --- !u!61 &1080271478
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -838,7 +770,6 @@ GameObject:
   - component: {fileID: 1567251042}
   - component: {fileID: 1567251041}
   - component: {fileID: 1567251040}
-  - component: {fileID: 1567251039}
   m_Layer: 0
   m_Name: Trigger (3)
   m_TagString: Untagged
@@ -846,21 +777,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1567251039
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1567251038}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4548cf8e1772ebc4aa08173dc2c0ec1f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  npcWalkToPosition: {fileID: 1567251042}
-  playerTag: Player
-  hasBeenTriggeredByPlayer: 0
 --- !u!61 &1567251040
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -988,7 +904,6 @@ GameObject:
   - component: {fileID: 1632261478}
   - component: {fileID: 1632261477}
   - component: {fileID: 1632261476}
-  - component: {fileID: 1632261475}
   m_Layer: 0
   m_Name: Trigger
   m_TagString: Untagged
@@ -996,21 +911,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1632261475
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1632261474}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4548cf8e1772ebc4aa08173dc2c0ec1f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  npcWalkToPosition: {fileID: 1632261478}
-  playerTag: Player
-  hasBeenTriggeredByPlayer: 0
 --- !u!61 &1632261476
 BoxCollider2D:
   m_ObjectHideFlags: 0
