@@ -57,4 +57,4 @@ public class PauseMenuController : MonoBehaviour
         Debug.Log("Oyundan çýkýlýyor...");
         Application.Quit();
     }
-}
+} 
