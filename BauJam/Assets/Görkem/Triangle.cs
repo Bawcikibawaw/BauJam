@@ -1,16 +1,32 @@
 using UnityEngine;
 
-public class TriangleController : MonoBehaviour
+// Bu script, sahnedeki 'Dikdortgen' objesine eklenmelidir.
+public class CarpismaKontrol : MonoBehaviour
 {
-    // Bu fonksiyon, bu script'in eklendiði obje (Üçgen)
-    // baþka bir fiziksel objeyle çarpýþtýðýnda Unity tarafýndan otomatik olarak çalýþtýrýlýr.
+    [Header("Atanacak Objeler")]
+    [Tooltip("Çarpýþma sonrasý oluþturulacak þalter nesnesinin Prefab'ý")]
+    [SerializeField] private GameObject salterPrefab;
+
+    [Tooltip("Üçgenin çarpmasý gereken hedef nokta")]
+    [SerializeField] private Transform hedefNokta;
+
+    [Header("Ayarlar")]
+    [Tooltip("Hedef noktaya ne kadar yakýn bir çarpýþmanýn kabul edileceði")]
+    [SerializeField] private float toleransMesafesi = 0.5f;
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        // Çarptýðýmýz objenin etiketinin (Tag) "Square" olup olmadýðýný kontrol ediyoruz.
-        if (collision.gameObject.CompareTag("Square"))
+        if (collision.gameObject.CompareTag("Ucgen"))
         {
-            // Eðer etiket "Square" ise, çarptýðýmýz o objeyi (yani kareyi) yok et.
-            Destroy(collision.gameObject);
+            Vector2 carpismaNoktasi = collision.contacts[0].point;
+            float mesafe = Vector2.Distance(carpismaNoktasi, hedefNokta.position);
+
+            if (mesafe <= toleransMesafesi)
+            {
+                // Nesneyi doðrudan hedef noktanýn konumunda oluþtur
+                Instantiate(salterPrefab, hedefNokta.position, Quaternion.identity);
+                Debug.Log("Þalter nesnesi oluþturuldu.");
+            }
         }
     }
 }
