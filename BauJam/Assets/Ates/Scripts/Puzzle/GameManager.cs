@@ -52,11 +52,14 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         // 🚨 Oyun başladığında rastgele hareket döngüsünü başlat
+        Debug.Log("GAME MANAGER START BAŞLADI. RandomMovementCycle başlatılıyor..."); // LOG EKLE
         StartCoroutine(RandomMovementCycle());
     }
     
     public void TriggerNPCWalk(Vector3 targetPosition)
     {
+        Debug.Log($"NPC Yürüme Olayı TETİKLENDİ. Abone sayısı: {OnNPCWalkToLocation?.GetInvocationList().Length ?? 0}");
+        
         if (OnNPCWalkToLocation != null)
         {
             OnNPCWalkToLocation.Invoke(targetPosition);
