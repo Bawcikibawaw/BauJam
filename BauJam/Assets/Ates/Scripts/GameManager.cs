@@ -80,7 +80,7 @@ public class GameManager : MonoBehaviour
         int randomIndex = Random.Range(0, availableTargets.Count);
         PathTarget selectedTarget = availableTargets[randomIndex];
 
-        if (selectedTarget != null)
+        if (selectedTarget != null && isNPCMoving == false)
         {
             TriggerNPCWalk(selectedTarget.transform.position);
         }

@@ -77,12 +77,6 @@ public class NPCController : MonoBehaviour
         }
         
         Debug.Log("NPC nihai hedefe ulaştı.");
-        
-        // Final hedefe ulaştıktan sonra da hareket bitti bilgisini gönder
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.isNPCMoving = false;
-        }
     }
 
     private IEnumerator MoveToSingleTarget(Vector3 targetPosition)
