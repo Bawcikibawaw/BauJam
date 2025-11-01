@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
@@ -5,31 +6,34 @@ using TMPro;
 
 public class QTEController : MonoBehaviour
 {
+    // QTE bittiğinde sonuç bilgisini yayınlayan Event
+    public static event Action<bool> OnQTEFinished;
+
     public static bool isGamePaused = false;
 
-    [Header("UI Elemanlar� (Buraya S�r�kle)")]
+    [Header("UI Elemanları")]
     public GameObject qtePanel;
     public Slider timerSlider;
     public TextMeshProUGUI sayacText;
     public TextMeshProUGUI sonucText;
-    public GameObject basarisizHerifTextObjesi; // "ba�ar�s�z herif!" yazan obje
+    public GameObject basarisizHerifTextObjesi;
 
-    [Header("QTE Ayarlar�")]
+    [Header("QTE Ayarları")]
     public float qteSuresi = 5f;
 
-
     private GameObject carpilanKare;
-    private Coroutine qteCoroutine;
+    public Coroutine qteCoroutine;
     public int tiklamaSayisi;
-    public GameObject qteObject;
+    public GameObject qteObject; // QTE'yi içeren en dıştaki obje
     public bool qteSuccsess = false;
 
     void Start()
     {
-        // Ba�lang��ta t�m UI elemanlar�n�n do�ru durumda oldu�undan emin olal�m
+        // Başlangıçta tüm görsel öğeleri kapatalım
         if (qtePanel != null) qtePanel.SetActive(false);
         if (sonucText != null) sonucText.gameObject.SetActive(false);
         if (basarisizHerifTextObjesi != null) basarisizHerifTextObjesi.SetActive(false);
+        if (qteObject != null) qteObject.SetActive(false);
     }
 
     void Update()
@@ -37,28 +41,31 @@ public class QTEController : MonoBehaviour
         QTEPress();
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    // Trigger'dan QTE'yi başlatmak için public metot
+    public void StartQTEProcess()
     {
-        // Oyun durdurulmuşsa veya QTE zaten aktifse (çalışan bir Coroutine varsa) çık.
         if (isGamePaused || qteCoroutine != null) return;
-    
-        // Çarpışan objenin (other) etiketi "Square" ise devam et.
-        if (other.gameObject.CompareTag("Square"))
-        {
-            // Tetikleyiciye giren objeyi kaydet.
-            carpilanKare = other.gameObject;
-            
-            qteObject.SetActive(true);
         
-            // QTE Coroutine'ini başlat ve referansını kaydet.
-            qteCoroutine = StartCoroutine(BaslatQTE());
+        if (qteObject != null)
+        {
+            qteObject.SetActive(true); 
         }
+        else
+        {
+            Debug.LogError("QTEController: qteObject atanmamış!");
+            return;
+        }
+
+        qteCoroutine = StartCoroutine(BaslatQTE());
     }
 
-    private IEnumerator BaslatQTE()
+    public IEnumerator BaslatQTE()
     {
         tiklamaSayisi = 0; 
-        qtePanel.SetActive(true);
+        sayacText.text = "0 / ";
+        
+        // Asıl paneli aç
+        if (qtePanel != null) qtePanel.SetActive(true); 
 
         float kalanZaman = qteSuresi;
         while (kalanZaman > 0)
@@ -75,58 +82,57 @@ public class QTEController : MonoBehaviour
         if (qteCoroutine != null && Input.GetKeyDown(KeyCode.E))
         {
             tiklamaSayisi++;
-            GameManager.Instance.mana++;
+            if (GameManager.Instance != null)
+            {
+                 GameManager.Instance.mana++;
+            }
             sayacText.text = tiklamaSayisi + " / ";
-            
-            Debug.Log("ANAN");
         }
     }
 
     private void DegerlendirSonucu()
     {
-        qtePanel.SetActive(false);
+        if (qtePanel != null) qtePanel.SetActive(false);
 
         if (tiklamaSayisi >= 1)
         {
             qteSuccsess = true;
-            Debug.Log("HALAN");
+            Debug.Log("QTE BAŞARILI! Event Yayınlanıyor.");
+            
+            // 🚨 Gecikmesiz açılış için Event hemen yayınlanır.
+            if (OnQTEFinished != null) OnQTEFinished.Invoke(true); 
+
             StartCoroutine(GosterSonucMesaji());
         }
         else
         {
             qteSuccsess = false;
-            // Ba�ar�s�zl�k durumunda bu Coroutine'i ba�lat
             StartCoroutine(GosterBasarisizMesaji());
         }
     }
 
     private IEnumerator GosterSonucMesaji()
     {
-        sonucText.gameObject.SetActive(true);
-        yield return new WaitForSeconds(2f);
-        sonucText.gameObject.SetActive(false);
+        if (sonucText != null) sonucText.gameObject.SetActive(true);
+        yield return new WaitForSeconds(1f); 
+        if (sonucText != null) sonucText.gameObject.SetActive(false);
         QTE_Sonlandir();
     }
 
     private IEnumerator GosterBasarisizMesaji()
     {
-        Debug.Log("Ba�ar�s�zl�k fonksiyonu �al��t�. Yaz�n�n �imdi g�r�nmesi laz�m.");
         isGamePaused = true;
-        basarisizHerifTextObjesi.SetActive(true); // G�R�N�R YAP
+        if (basarisizHerifTextObjesi != null) basarisizHerifTextObjesi.SetActive(true); 
         yield return new WaitForSeconds(2f);
-        basarisizHerifTextObjesi.SetActive(false); // G�ZLE
-        QTE_Sonlandir();
+        if (basarisizHerifTextObjesi != null) basarisizHerifTextObjesi.SetActive(false); 
         isGamePaused = false;
+        QTE_Sonlandir(); 
     }
 
     private void QTE_Sonlandir()
     {
         carpilanKare = null;
         qteCoroutine = null;
-        qteObject.SetActive(false);
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.isNPCMoving = false;
-        }
+        if (qteObject != null) qteObject.SetActive(false);
     }
 }

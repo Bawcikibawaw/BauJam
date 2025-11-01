@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random; 
-using System.Collections; // Coroutine için gerekli
+using System.Collections;
+using UnityEngine.SceneManagement; // Coroutine için gerekli
 
 public class GameManager : MonoBehaviour
 {
@@ -11,6 +12,12 @@ public class GameManager : MonoBehaviour
     [Header("Rastgele Hedefler")]
     [Tooltip("NPC'nin rastgele seçilerek gidebileceği tüm hedef noktalarının listesi.")]
     public List<PathTarget> availableTargets = new List<PathTarget>();
+    
+    private HashSet<PathTarget> usedTargets = new HashSet<PathTarget>();
+    
+    public PathTarget finalDestinationTarget; 
+    
+    private bool finalDestinationReached = false; // Final hedefine ulaşıldı mı?
 
     [Header("Otomatik Tetikleme Ayarları")]
     [Tooltip("NPC'nin hareket etmesi için ne kadar beklenecek (Min/Max saniye).")]
@@ -26,13 +33,19 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        // Önce Singleton kontrolü yapılır
         if (Instance != null && Instance != this)
         {
+            // Eğer sahneden yeni yüklenen bir GameManager varsa, onu yok et.
             Destroy(gameObject);
         }
         else
         {
+            // Eğer bu, tek ve ilk GameManager ise:
             Instance = this;
+            
+            // 🚨 BU SATIRI EKLEYİN: Objeyi sahneler arası taşır ve yok edilmesini engeller.
+            DontDestroyOnLoad(gameObject); 
         }
     }
 
@@ -51,6 +64,8 @@ public class GameManager : MonoBehaviour
             Debug.Log($"NPC yürüme olayı tetiklendi. Hedef: {targetPosition}"); 
         }
     }
+    
+    
 
     
     private IEnumerator RandomMovementCycle()
@@ -73,22 +88,41 @@ public class GameManager : MonoBehaviour
     // Bu fonksiyon artık Coroutine tarafından çağrılıyor
     public void SelectAndTriggerRandomTarget()
     {
-        if (availableTargets.Count == 0)
+        // YENİ KONTROL: Eğer tüm rastgele hedefler kullanıldıysa (ve final hareket başlatılmadıysa)
+        if (usedTargets.Count >= availableTargets.Count)
         {
-            Debug.LogWarning("Hedef listesi boş. Rastgele tetikleme yapılamıyor.");
-            return;
+            Debug.Log("Tüm rastgele hedefler tamamlandı. Final hedefine geçiş tetikleniyor.");
+        
+            // Final hareketini başlat
+            StartFinalMovement(); // <-- Önceki direkt sahne değiştirme yerine, final hareketini başlat
+            return; 
         }
 
-        int randomIndex = Random.Range(0, availableTargets.Count);
-        PathTarget selectedTarget = availableTargets[randomIndex];
+        // 1. Kullanılmamış hedeflerin listesini hazırla
+        List<PathTarget> remainingTargets = new List<PathTarget>();
+        foreach(var target in availableTargets)
+        {
+            if (!usedTargets.Contains(target))
+            {
+                remainingTargets.Add(target);
+            }
+        }
+
+        if (remainingTargets.Count == 0) return; // (Bu satır aslında yukarıdaki kontrolle gereksizleşir ama kalsın)
+
+        // 2. Kalan hedefler arasından rastgele birini seç
+        int randomIndex = Random.Range(0, remainingTargets.Count);
+        PathTarget selectedTarget = remainingTargets[randomIndex];
 
         if (selectedTarget != null && isNPCMoving == false)
         {
             TriggerNPCWalk(selectedTarget.transform.position);
+        
+            // Hareketi başlattıktan sonra hedefi kullanılanlar listesine ekle
+            usedTargets.Add(selectedTarget);
+            Debug.Log($"Hedef kullanıldı: {selectedTarget.name}. Kalan Hedef Sayısı: {remainingTargets.Count - 1}");
         }
-    }
-    
-    public void BuyCard(PainSO cardToBuy)
+    }    public void BuyCard(PainSO cardToBuy)
     {
         // 1. Gereksinim Kontrolü
         if (mana >= cardToBuy.manaRequirement)
@@ -96,13 +130,61 @@ public class GameManager : MonoBehaviour
             // 2. Satın Alma Başarılı
             mana -= cardToBuy.manaRequirement;
             Debug.Log($"SATIN ALMA BAŞARILI: Kalan Mana: {mana}");
-            
+            Debug.Log("SİKKEEEEEEEEEMMMMMMMMMM");
             // Satın alınan kartın etkisini burada uygula (Örn: Hasar verme, buff verme vb.)
         }
         else
         {
             // 3. Satın Alma Başarısız
-            Debug.LogWarning($"SATIN ALMA BAŞARISIZ: Yeterli Mana yok. Gereken: {cardToBuy.manaRequirement}, Mevcut: {mana}");
+            Debug.Log("SİKEM");
         }
+    }
+    
+    private void CheckForSceneChange()
+    {
+         int nextSceneIndex = SceneManager.GetActiveScene().buildIndex + 1;
+         SceneManager.LoadScene(nextSceneIndex);
+    }
+    
+    private void StartFinalMovement()
+    {
+        // 1. Rastgele döngüyü durdur
+        StopAllCoroutines(); 
+        
+        if (finalDestinationTarget == null)
+        {
+            Debug.LogError("Final hedefi atanmamış! Sahne geçişi direk tetikleniyor.");
+            DoSceneChange();
+            return;
+        }
+
+        if (isNPCMoving)
+        {
+            // 2. Final hedefine yürüme olayını tetikle
+            TriggerNPCWalk(finalDestinationTarget.transform.position);
+            finalDestinationReached = true; 
+
+            // 3. NPC'nin son hedefine ulaşmasını bekleyen Coroutine'i başlat
+            StartCoroutine(WaitForFinalMovementCompletion());
+        }
+    }
+    
+    private IEnumerator WaitForFinalMovementCompletion()
+    {
+        // isNPCMoving'in tekrar false olmasını bekle (yani NPC durdu)
+        yield return new WaitUntil(() => isNPCMoving == false); 
+
+        // Not: Eğer NPC bu noktada durduysa ve bu duruş final hedefindeyse, sahne değiştir.
+        // Konum kontrolü opsiyoneldir, isNPCMoving=false yeterli olmalı.
+        
+        Debug.Log("NPC son hedefine ulaştı. Sahne Değiştiriliyor...");
+        DoSceneChange();
+    }
+    
+    private void DoSceneChange()
+    {
+        int nextSceneIndex = SceneManager.GetActiveScene().buildIndex + 1;
+        
+        SceneManager.LoadScene(nextSceneIndex);
     }
 }
