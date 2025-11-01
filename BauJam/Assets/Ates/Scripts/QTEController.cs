@@ -23,6 +23,7 @@ public class QTEController : MonoBehaviour
     private Coroutine qteCoroutine;
     private int tiklamaSayisi;
     public GameObject qteObject;
+    public bool qteSuccsess = false;
 
     void Start()
     {
@@ -92,12 +93,13 @@ public class QTEController : MonoBehaviour
             if (tiklamaSayisi == maxTiklama) { mana += 10; mesaj = "+10 MANA!"; }
             else if (tiklamaSayisi >= 5) { mana += 5; mesaj = "+5 MANA"; }
             else { mana += 3; mesaj = "+3 MANA"; }
-
-            if (carpilanKare != null) Destroy(carpilanKare);
+            
+            qteSuccsess = true;
             StartCoroutine(GosterSonucMesaji(mesaj));
         }
         else
         {
+            qteSuccsess = false;
             // Ba�ar�s�zl�k durumunda bu Coroutine'i ba�lat
             StartCoroutine(GosterBasarisizMesaji());
         }
