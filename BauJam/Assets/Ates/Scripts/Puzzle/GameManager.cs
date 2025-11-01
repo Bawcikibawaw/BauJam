@@ -20,7 +20,9 @@ public class GameManager : MonoBehaviour
     public event Action<Vector3> OnNPCWalkToLocation; 
     
     // NPC'nin şu an hareket edip etmediğini takip etmeliyiz
-    public bool isNPCMoving = false; 
+    public bool isNPCMoving = false;
+
+    public int mana = 0;
 
     private void Awake()
     {
@@ -83,6 +85,24 @@ public class GameManager : MonoBehaviour
         if (selectedTarget != null && isNPCMoving == false)
         {
             TriggerNPCWalk(selectedTarget.transform.position);
+        }
+    }
+    
+    public void BuyCard(PainSO cardToBuy)
+    {
+        // 1. Gereksinim Kontrolü
+        if (mana >= cardToBuy.manaRequirement)
+        {
+            // 2. Satın Alma Başarılı
+            mana -= cardToBuy.manaRequirement;
+            Debug.Log($"SATIN ALMA BAŞARILI: Kalan Mana: {mana}");
+            
+            // Satın alınan kartın etkisini burada uygula (Örn: Hasar verme, buff verme vb.)
+        }
+        else
+        {
+            // 3. Satın Alma Başarısız
+            Debug.LogWarning($"SATIN ALMA BAŞARISIZ: Yeterli Mana yok. Gereken: {cardToBuy.manaRequirement}, Mevcut: {mana}");
         }
     }
 }

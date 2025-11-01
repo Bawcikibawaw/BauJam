@@ -6,7 +6,6 @@ using TMPro;
 public class QTEController : MonoBehaviour
 {
     public static bool isGamePaused = false;
-    public static int mana = 0;
 
     [Header("UI Elemanlar� (Buraya S�r�kle)")]
     public GameObject qtePanel;
@@ -17,11 +16,11 @@ public class QTEController : MonoBehaviour
 
     [Header("QTE Ayarlar�")]
     public float qteSuresi = 5f;
-    public int maxTiklama = 10;
+
 
     private GameObject carpilanKare;
     private Coroutine qteCoroutine;
-    private int tiklamaSayisi;
+    public int tiklamaSayisi;
     public GameObject qteObject;
     public bool qteSuccsess = false;
 
@@ -58,8 +57,7 @@ public class QTEController : MonoBehaviour
 
     private IEnumerator BaslatQTE()
     {
-        tiklamaSayisi = 0;
-        sayacText.text = tiklamaSayisi + " / " + maxTiklama;
+        tiklamaSayisi = 0; 
         qtePanel.SetActive(true);
 
         float kalanZaman = qteSuresi;
@@ -74,10 +72,11 @@ public class QTEController : MonoBehaviour
 
     public void QTEPress()
     {
-        if (qteCoroutine != null && tiklamaSayisi < maxTiklama && Input.GetKeyDown(KeyCode.E))
+        if (qteCoroutine != null && Input.GetKeyDown(KeyCode.E))
         {
             tiklamaSayisi++;
-            sayacText.text = tiklamaSayisi + " / " + maxTiklama;
+            GameManager.Instance.mana++;
+            sayacText.text = tiklamaSayisi + " / ";
             
             Debug.Log("ANAN");
         }
@@ -89,13 +88,9 @@ public class QTEController : MonoBehaviour
 
         if (tiklamaSayisi >= 1)
         {
-            string mesaj = "";
-            if (tiklamaSayisi == maxTiklama) { mana += 10; mesaj = "+10 MANA!"; }
-            else if (tiklamaSayisi >= 5) { mana += 5; mesaj = "+5 MANA"; }
-            else { mana += 3; mesaj = "+3 MANA"; }
-            
             qteSuccsess = true;
-            StartCoroutine(GosterSonucMesaji(mesaj));
+            Debug.Log("HALAN");
+            StartCoroutine(GosterSonucMesaji());
         }
         else
         {
@@ -105,9 +100,8 @@ public class QTEController : MonoBehaviour
         }
     }
 
-    private IEnumerator GosterSonucMesaji(string mesaj)
+    private IEnumerator GosterSonucMesaji()
     {
-        sonucText.text = mesaj;
         sonucText.gameObject.SetActive(true);
         yield return new WaitForSeconds(2f);
         sonucText.gameObject.SetActive(false);
