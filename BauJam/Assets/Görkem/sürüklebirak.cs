@@ -40,6 +40,6 @@ public class SürükleBırak : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
         // Eğer obje bir BırakmaAlanı'na bırakılmadıysa eski pozisyonuna dönsün
         // Bu kontrol BırakmaAlanı script'i tarafından yönetilecek. Eğer o script pozisyonu
-        // değiştirmezse, obje bırakıldığı yerde kalır. İstersen eski yerine dönmesini de sağlayabiliriz.
+        // değiştirmezse, obje bırakıldığı yerde kalır. İster   sen eski yerine dönmesini de sağlayabiliriz.
     }
 }
