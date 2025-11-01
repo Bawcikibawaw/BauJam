@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random; 
+using System.Collections; // Coroutine için gerekli
 
 public class GameManager : MonoBehaviour
 {
@@ -11,7 +12,15 @@ public class GameManager : MonoBehaviour
     [Tooltip("NPC'nin rastgele seçilerek gidebileceği tüm hedef noktalarının listesi.")]
     public List<PathTarget> availableTargets = new List<PathTarget>();
 
+    [Header("Otomatik Tetikleme Ayarları")]
+    [Tooltip("NPC'nin hareket etmesi için ne kadar beklenecek (Min/Max saniye).")]
+    public Vector2 randomDelayRange = new Vector2(3f, 8f); // Örn: 3 ila 8 saniye arası
+
+    // NPC'ye sadece hedef konumu gönderen event
     public event Action<Vector3> OnNPCWalkToLocation; 
+    
+    // NPC'nin şu an hareket edip etmediğini takip etmeliyiz
+    public bool isNPCMoving = false; 
 
     private void Awake()
     {
@@ -25,15 +34,41 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        // 🚨 Oyun başladığında rastgele hareket döngüsünü başlat
+        StartCoroutine(RandomMovementCycle());
+    }
+    
     public void TriggerNPCWalk(Vector3 targetPosition)
     {
         if (OnNPCWalkToLocation != null)
         {
             OnNPCWalkToLocation.Invoke(targetPosition);
+            isNPCMoving = true; // Hareket başladı
             Debug.Log($"NPC yürüme olayı tetiklendi. Hedef: {targetPosition}"); 
         }
     }
 
+    
+    private IEnumerator RandomMovementCycle()
+    {
+        while (true) // Oyun çalıştığı sürece döngü devam eder
+        {
+            // 1. NPC'nin hareket etmesinin bitmesini bekle
+            yield return new WaitUntil(() => isNPCMoving == false);
+
+            // 2. Rastgele bekleme süresi kadar bekle (Örn: 3 ila 8 saniye)
+            float waitTime = Random.Range(randomDelayRange.x, randomDelayRange.y);
+            Debug.Log($"NPC durdu. Yeni hareket için {waitTime:F2} saniye bekleniyor...");
+            yield return new WaitForSeconds(waitTime);
+
+            // 3. Rastgele hedef seç ve hareketi tetikle
+            SelectAndTriggerRandomTarget();
+        }
+    }
+
+    // Bu fonksiyon artık Coroutine tarafından çağrılıyor
     public void SelectAndTriggerRandomTarget()
     {
         if (availableTargets.Count == 0)
@@ -48,7 +83,6 @@ public class GameManager : MonoBehaviour
         if (selectedTarget != null)
         {
             TriggerNPCWalk(selectedTarget.transform.position);
-            Debug.Log($"Rastgele seçilen Nihai Hedef: {selectedTarget.gameObject.name}");
         }
     }
 }
