@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerRespawn : MonoBehaviour
 {
@@ -20,31 +21,12 @@ public class PlayerRespawn : MonoBehaviour
         // Temas etti�imiz nesnenin etiketi "Zemin" mi?
         if (collision.gameObject.CompareTag("Zemin"))
         {
-            // E�er evetse, oyuncuyu yeniden do�ur
-            Respawn();
+            SceneManager.LoadScene("GameOver");
         }
-    }
 
-    // Oyuncuyu yeniden do�uran fonksiyon
-    private void Respawn()
-    {
-        // Spawn noktas� atanm�� m� diye kontrol et
-        if (spawnPoint != null)
+        if (collision.gameObject.CompareTag("SafeZone"))
         {
-            // I��nlanma sonras� olu�abilecek istenmeyen hareketleri engellemek i�in
-            // oyuncunun h�z�n� (velocity) s�f�rla.
-            if (rb != null)
-            {
-                rb.linearVelocity = Vector2.zero;
-            }
-
-            // Oyuncunun pozisyonunu spawn noktas�n�n pozisyonuna e�itle
-            transform.position = spawnPoint.position;
-        }
-        else
-        {
-            // E�er spawn noktas� atanmad�ysa konsola bir hata mesaj� yazd�r.
-            Debug.LogError("Spawn Point atanmam��! L�tfen PlayerRespawn script'ine SpawnNoktasi objesini atay�n.");
+            SceneManager.LoadScene("PainManager");
         }
     }
 }

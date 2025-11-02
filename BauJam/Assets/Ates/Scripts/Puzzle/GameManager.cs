@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random; 
 using System.Collections;
-using UnityEngine.SceneManagement;
+using UnityEngine.SceneManagement; 
 
 public class GameManager : MonoBehaviour
 {
@@ -32,18 +32,20 @@ public class GameManager : MonoBehaviour
 
     public event Action<PathTarget> OnNPCWalkToLocation; 
     public event Action<bool> OnMinigameStatusChange; 
+    public event Action OnCardCountUpdated; // Kart sistemi için
     
-    // YENİ EKLENTİ: Kart Sistemi Eventi
-    public event Action OnCardCountUpdated; 
-
+    [Header("Oyun Durumu")]
+    public int cardsPurchasedCount = 0; // Kart sistemi için
     public bool isNPCMoving = false;
     public int mana = 0;
     
-    // YENİ EKLENTİ: Kart Sayısı
-    public int cardsPurchasedCount = 0;
-    
     private bool firstRun = true; 
     private bool minigameIsPending = false; 
+    
+    // YENİ EKLENTİ: Seviye Geçişi İçin
+    [Header("Seviye Yönetimi")]
+    public int nextLevelToLoad = 1; // Başlangıç seviyesi
+    public string mainMenuSceneName = "MainMenu"; // Ana Menü sahne adı
 
     private void Awake()
     {
@@ -99,48 +101,43 @@ public class GameManager : MonoBehaviour
 
             // --- Minigame/Wait Mantığı Başlar ---
             
-            // DİKKAT: Burada Final kontrolü yaparsak, son Minigame atlanır.
-            // Bu yüzden Minigame mantığı koşulsuz olarak çalıştırılmalı.
+            // Eğer tüm hedefler tamamlandıysa, Final'a geç (Bu, Minigame oynandıktan sonra olur)
+            if (usedTargets.Count >= availableTargets.Count)
+            {
+                // Artık StartFinalMovement() yerine seviye tamamlandı komutu verilir
+                CompleteCurrentLevel(); 
+                yield break; 
+            }
+            
+            // --- Normal Minigame Beklemesi ---
             
             float waitTime = timeAfterRandomTargetReached; 
             
             minigameIsPending = true; 
             
-            // PUZZLE'I AÇ KOMUTU
             OnMinigameStatusChange?.Invoke(true); 
             Debug.Log("Minigame AÇILDI. 20 saniye süre başladı.");
             
             Debug.Log($"NPC durdu. Yeni hareket için {waitTime:F2} saniye bekleniyor.");
             
-            // Bekle
             yield return new WaitForSeconds(waitTime); 
             
-            // Eğer süre dolduysa (ve SuccessTrigger tarafından kesilmediyse)
             if (minigameIsPending)
             {
-                 // PUZZLE'I KAPAT KOMUTU (Süre bittiği için)
                  OnMinigameStatusChange?.Invoke(false);
                  Debug.Log("Minigame KAPANDI. Süre doldu.");
                  minigameIsPending = false;
             }
 
-            // 3. KONTROL VE HAREKET: Süre dolduktan sonra Final kontrolü yapılır
-            
-            // HEDEFLER BİTTİYSE, FİNAL HAREKETİNİ BAŞLAT
-            if (usedTargets.Count >= availableTargets.Count)
-            {
-                StartFinalMovement();
-                yield break; 
-            }
-            
-            // Aksi halde bir sonraki rastgele hedefi seç
+            // 3. Rastgele hedef seç ve hareketi tetikle
             SelectAndTriggerRandomTarget();
         }
     }
 
+    // 🚨 GERİ YÜKLENEN METOT: Rastgele hedef seçimi (önceki mantık korundu)
     public void SelectAndTriggerRandomTarget()
     {
-        // Hedefler bittiyse, bir şey yapma (Final RandomMovementCycle içinde tetiklenecek)
+        // Hedefler bittiyse, bir şey yapma 
         if (usedTargets.Count >= availableTargets.Count)
         {
             return; 
@@ -169,9 +166,8 @@ public class GameManager : MonoBehaviour
         }
     }
     
-    // --- KART SİSTEMİ METOTLARI ---
+    // --- KART SİSTEMİ METOTLARI (KORUNDU) ---
     
-    // YENİ EKLENTİ: Final Kart'ın satın alınabilir olup olmadığını kontrol eder
     public bool CanPurchaseFinalCard(int totalCardsInShop)
     {
         return cardsPurchasedCount >= (totalCardsInShop - 1); 
@@ -182,12 +178,10 @@ public class GameManager : MonoBehaviour
         if (mana >= cardToBuy.manaRequirement)
         {
             mana -= cardToBuy.manaRequirement;
-            // YENİ EKLENTİ: Kart sayacını artır
-            cardsPurchasedCount++;
+            cardsPurchasedCount++; 
             
             Debug.Log($"SATIN ALMA BAŞARILI: Kalan Mana: {mana}. Toplam Kart: {cardsPurchasedCount}");
 
-            // YENİ EKLENTİ: Kart sayımı değişti olayını tetikle
             OnCardCountUpdated?.Invoke(); 
         }
         else
@@ -196,42 +190,55 @@ public class GameManager : MonoBehaviour
         }
     }
     
-    // --- FİNAL HAREKETİ METOTLARI ---
+    // --- FİNAL / SEVİYE GEÇİŞ METOTLARI ---
+
+    /// <summary>
+    /// Bir seviye (LVL1, LVL2 vb.) bittiğinde çağrılır.
+    /// Bir sonraki seviye indeksini kaydeder ve Menü'ye döner.
+    /// </summary>
+    public void CompleteCurrentLevel()
+    {
+        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
+        
+        // 1. Bir sonraki seviyenin indeksini kaydet
+        nextLevelToLoad = currentSceneIndex + 1;
+
+        Debug.Log($"Seviye Tamamlandı. Bir sonraki yüklenecek seviye indexi: {nextLevelToLoad}. Menü'ye dönülüyor.");
+
+        // 2. Menü Sahnesini yükle
+        SceneManager.LoadScene(mainMenuSceneName);
+    }
     
+    /// <summary>
+    /// Ana Menü'deki 'Devam Et' butonuna atanacak metot.
+    /// nextLevelToLoad değişkeninde kayıtlı olan seviyeyi yükler.
+    /// </summary>
+    public void LoadNextTrackedLevel()
+    {
+        if (nextLevelToLoad < SceneManager.sceneCountInBuildSettings)
+        {
+            Debug.Log($"Menü butonu tıklandı. Yükleniyor: Index {nextLevelToLoad}");
+            SceneManager.LoadScene(nextLevelToLoad);
+        }
+        else
+        {
+            Debug.LogWarning("Tüm seviyeler tamamlandı! Oyun sonu akışına geçiliyor.");
+        }
+    }
+    
+    // NOT: NPC'nin son hedefine ulaştığında Minigame sonrası çağrılmalıdır.
     private void StartFinalMovement()
     {
-        if (finalDestinationTarget == null)
-        {
-            Debug.LogError("Final hedefi atanmamış! Sahne geçişi direk tetikleniyor.");
-            DoSceneChange();
-            return;
-        }
+        Debug.LogWarning("NPC Final Destination'a yönlendirildi. Artık CompleteCurrentLevel() çağrılmalı.");
         
-        Debug.Log("Tüm rastgele hedefler tamamlandı. Final hedefine yönlendiriliyor.");
-        
-        TriggerNPCWalk(finalDestinationTarget);
-        finalDestinationReached = true; 
-
-        StartCoroutine(WaitForFinalMovementCompletion());
+        // Final Destination yerine Level'ı bitirme komutu verilir.
+        CompleteCurrentLevel();
     }
     
-    private IEnumerator WaitForFinalMovementCompletion()
-    {
-        yield return new WaitUntil(() => isNPCMoving == false); 
-        
-        Debug.Log("NPC son hedefine ulaştı. Kısa bir süre bekleniyor...");
-        yield return new WaitForSeconds(1f); 
-
-        Debug.Log("Sahne Değiştiriliyor...");
-        DoSceneChange();
-    }
-    
-    // Minigame kazanıldığında bekleme süresini atlamak için çağrılır
     public void MinigameSuccessTrigger()
     {
         StopAllCoroutines(); 
 
-        // Eğer Minigame beklemedeyse (süre dolmadan başarılı oldu), kapatma komutu gönderilir.
         if (minigameIsPending)
         {
             OnMinigameStatusChange?.Invoke(false);
@@ -239,23 +246,14 @@ public class GameManager : MonoBehaviour
             minigameIsPending = false;
         }
     
-        // HEDEFLER BİTTİYSE, FİNAL HAREKETİNİ BAŞLAT
         if (usedTargets.Count >= availableTargets.Count)
         {
-            StartFinalMovement();
+            // Eğer tüm hedefler bittiyse, seviyeyi tamamla ve Menü'ye dön
+            CompleteCurrentLevel();
             return; 
         }
 
-        // Bir sonraki rastgele hedefi seç
         SelectAndTriggerRandomTarget();
-        
-        // RandomMovementCycle'ı yeniden başlat
         StartCoroutine(RandomMovementCycle());
-    }
-    
-    private void DoSceneChange()
-    {
-        int nextSceneIndex = SceneManager.GetActiveScene().buildIndex + 1;
-        SceneManager.LoadScene(nextSceneIndex);
     }
 }
