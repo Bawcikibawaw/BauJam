@@ -19,6 +19,7 @@ public class BırakmaAlanı : MonoBehaviour, IDropHandler
             // eventData.pointerDrag.GetComponent<SürükleBırak>().enabled = false;
 
             Debug.Log("Obje başarıyla yerleştirildi.");
+            GameManager.Instance.MinigameSuccessTrigger();
         }
     }
 }

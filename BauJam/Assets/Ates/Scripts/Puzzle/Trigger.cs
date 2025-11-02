@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class Trigger : MonoBehaviour
 {
@@ -13,27 +14,32 @@ public class Trigger : MonoBehaviour
     [Tooltip("QTE başarılı olduğunda açılacak Panel/Puzzle objesi.")]
     public GameObject puzzle; 
 
+    // Referanslar
+    private GameManager gmInstance; 
+
+    void Start() 
+    {
+        gmInstance = GameManager.Instance;
+        // Başlangıçta Puzzle'ı kapat
+        if (puzzle != null) puzzle.SetActive(false); 
+    }
+
     void OnEnable()
     {
-        // ABONELİK: Event'e abone ol (Doğru yer)
+        // DİNAMİK ABONELİK: Sadece QTE Event'ine abone ol
         QTEController.OnQTEFinished += HandleQTEFinished;
     }
 
     void OnDisable()
     {
-        // TEMİZLİK: Aboneliği kaldır
         QTEController.OnQTEFinished -= HandleQTEFinished;
-    }
-
-    private void Update()
-    {
-        if (!GameManager.Instance.isNPCMoving)
+        
+        // Kapanma event'inden aboneliği kaldır (güvenlik)
+        if (gmInstance != null)
         {
-            puzzle.SetActive(false);
+            gmInstance.OnMinigameStatusChange -= HandleMinigameStatus; 
         }
     }
-
-    // NPC hareket ediyorsa puzzle'ı kapatma mantığını koruyoruz.
 
     private void OnTriggerEnter2D(Collider2D other)
     {
@@ -41,7 +47,7 @@ public class Trigger : MonoBehaviour
         {
             if (GameManager.Instance == null)
             {
-                Debug.LogError("GameManager sahneye eklenmemiş!");
+                Debug.LogError("Trigger: GameManager sahneye eklenmemiş!");
                 return;
             }
 
@@ -51,11 +57,11 @@ public class Trigger : MonoBehaviour
                 return;
             }
 
-            // 1. NPC hareketini başlat
+            // 1. NPC rastgele hareketini başlat
             GameManager.Instance.SelectAndTriggerRandomTarget();
             
-            // 🚨 2. QTE'yi başlat! (Gecikmesiz açılış için)
-            qteController.StartQTEProcess(); 
+            // 2. QTE'yi başlat ve KENDİ Trigger referansını gönder!
+            qteController.StartQTEProcess(this); 
 
             hasBeenTriggered = true; 
             GetComponent<Collider2D>().enabled = false;
@@ -63,14 +69,43 @@ public class Trigger : MonoBehaviour
     }
 
     // 🚨 EVENT HANDLER: QTE başarılı olduğu an bu metot çağrılır.
-    private void HandleQTEFinished(bool success)
+    private void HandleQTEFinished(bool success, Trigger triggeredBy) 
     {
+        // Filtre: Event'i tetikleyen objee bu değilse çık (Sadece bu Trigger'a ait sonuçsa işlem yap)
+        if (triggeredBy != this) return; 
+
         if (success)
         {
-            if (puzzle != null)
+            // YALNIZCA BAŞARILI OLDUĞUNDA KAPANMA EVENT'İNE ABONE OL
+            if (gmInstance != null)
             {
-                puzzle.SetActive(true);
-                Debug.Log("HandleQTEFinished: Puzzle anında aktif edildi!");
+                 // Kapanma Event'ine abone ol
+                 gmInstance.OnMinigameStatusChange += HandleMinigameStatus; 
+                 
+                 // Puzzle'ı hemen aç (Kapanma komutu 20 sn sonra GameManager'dan gelecek)
+                 if (puzzle != null)
+                 {
+                     puzzle.SetActive(true); 
+                     Debug.Log($"Trigger: QTE Başarılı, {gameObject.name}'e ait Puzzle AÇIK.");
+                 }
+            }
+        }
+    }
+
+    // 🚨 YENİ METOT: GameManager'dan gelen Aç/Kapat komutunu işler
+    private void HandleMinigameStatus(bool status)
+    {
+        if (puzzle != null)
+        {
+            // Event true ise aç, false ise kapat
+            puzzle.SetActive(status);
+            Debug.Log($"Trigger: Minigame Kapanma/Açılma Komutu Geldi: {status}");
+            
+            // Eğer kapanma komutu geldiyse (status=false), aboneliği kaldır
+            if (status == false && gmInstance != null)
+            {
+                gmInstance.OnMinigameStatusChange -= HandleMinigameStatus;
+                Debug.Log($"Trigger: {gameObject.name} kapanma eventinden ayrıldı.");
             }
         }
     }

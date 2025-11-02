@@ -1,19 +1,19 @@
 using UnityEngine;
 using System.Linq;
-using System.Collections; // Coroutine kullanmak için bu satýr gerekli (YENÝ)
+using System.Collections; // Coroutine kullanmak iï¿½in bu satï¿½r gerekli (YENï¿½)
 
 public class SifreBeyniKontrol : MonoBehaviour
 {
-    [Header("Görsel Ayarlarý")]
+    [Header("Gï¿½rsel Ayarlarï¿½")]
     public Sprite acikResim;
     public Sprite kapaliResim;
 
-    [Header("Bulmaca Elemanlarý")]
+    [Header("Bulmaca Elemanlarï¿½")]
     public BulmacaSalteri[] salterler;
 
     private int[] salterDurumlari = { 0, 0, 0, 0 };
 
-    // Bulmacanýn çözülüp çözülmediðini kontrol eden bir bayrak (YENÝ)
+    // Bulmacanï¿½n ï¿½ï¿½zï¿½lï¿½p ï¿½ï¿½zï¿½lmediï¿½ini kontrol eden bir bayrak (YENï¿½)
     private bool bulmacaCozuldu = false;
 
     void Start()
@@ -23,10 +23,10 @@ public class SifreBeyniKontrol : MonoBehaviour
 
     public void BirSaltereBasildi(int hangiID)
     {
-        // Eðer bulmaca zaten çözüldüyse, butonlarýn tekrar çalýþmasýný engelle (YENÝ)
+        // Eï¿½er bulmaca zaten ï¿½ï¿½zï¿½ldï¿½yse, butonlarï¿½n tekrar ï¿½alï¿½ï¿½masï¿½nï¿½ engelle (YENï¿½)
         if (bulmacaCozuldu)
         {
-            return; // Fonksiyondan çýk, hiçbir þey yapma
+            return; // Fonksiyondan ï¿½ï¿½k, hiï¿½bir ï¿½ey yapma
         }
 
         if (hangiID == 0) { DurumDegistir(0); DurumDegistir(1); }
@@ -59,27 +59,10 @@ public class SifreBeyniKontrol : MonoBehaviour
     {
         if (salterDurumlari.All(durum => durum == 1))
         {
-            // Paneli hemen kapatmak yerine, gecikmeyi baþlatan Coroutine'i çaðýr (YENÝ)
-            bulmacaCozuldu = true; // Bayraðý indir, artýk butonlar çalýþmasýn
-            StartCoroutine(KapanmaGecikmesi());
+            // Paneli hemen kapatmak yerine, gecikmeyi baï¿½latan Coroutine'i ï¿½aï¿½ï¿½r (YENï¿½)
+            bulmacaCozuldu = true; // Bayraï¿½ï¿½ indir, artï¿½k butonlar ï¿½alï¿½ï¿½masï¿½n
+            gameObject.SetActive(false);
+            GameManager.Instance.MinigameSuccessTrigger();
         }
-    }
-
-    // 2 saniye bekleyip sonra paneli kapatan fonksiyon (YENÝ)
-    IEnumerator KapanmaGecikmesi()
-    {
-        Debug.Log("TEBRÝKLER! BULMACA ÇÖZÜLDÜ! Panel 2 saniye içinde kapanacak.");
-
-        // 2 saniye bekle. Time.timeScale 0 olduðu için Realtime kullanmalýyýz.
-        yield return new WaitForSecondsRealtime(2f);
-
-        // Bekleme bittikten sonra bu kodlar çalýþýr
-        Debug.Log("Panel kapatýlýyor ve oyun devam ediyor.");
-
-        // Mini oyun penceresini kapat
-        gameObject.transform.parent.gameObject.SetActive(false);
-
-        // Ana oyunu devam ettir
-        Time.timeScale = 1f;
     }
 }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
+using System; // Action için
 
 public class Unit : MonoBehaviour
 {
@@ -15,16 +16,16 @@ public class Unit : MonoBehaviour
     private Grid grid;               
     private GameManager gameManager; 
     
-    // ... (Yol Takip Değişkenleri)
+    // Collider Yönetimi için yeni değişken
+    private Collider2D currentTargetCollider; // <-- Sadece hareket eden hedef objenin collider'ını tutar
+    
     private List<Node> currentPath; 
     private int targetIndex;         
     
     private void Start()
     {
         animator = GetComponent<Animator>();
-        // SpriteRenderer sadece Flip için gereklidir, eğer animasyonlarınızda Flip kullanacaksanız tutun.
         spriteRenderer = GetComponent<SpriteRenderer>(); 
-
         pathfinder = FindObjectOfType<PathFinding>();
         grid = FindObjectOfType<Grid>();
         gameManager = GameManager.Instance; 
@@ -36,6 +37,7 @@ public class Unit : MonoBehaviour
             return;
         }
         
+        // KRİTİK GÜNCELLEME: Event parametresi PathTarget oldu
         gameManager.OnNPCWalkToLocation += OnWalkToLocationRequested;
     }
 
@@ -47,10 +49,29 @@ public class Unit : MonoBehaviour
         }
     }
 
-    private void OnWalkToLocationRequested(Vector3 targetPosition)
+    // GameManager'dan hedef objesi geldiğinde bu fonksiyon tetiklenir
+    private void OnWalkToLocationRequested(PathTarget targetObject) // <-- PARAMETRE GÜNCELLENDİ
     {
         StopAllCoroutines(); 
-        pathfinder.FindPath(transform.position, targetPosition);
+        
+        // 1. Önceki hedef collider'ı KAPAT
+        if (currentTargetCollider != null)
+        {
+            currentTargetCollider.enabled = false;
+        }
+
+        // 2. Yeni hedef collider'ı al ve AÇ
+        currentTargetCollider = targetObject.GetComponent<Collider2D>();
+        
+        if (currentTargetCollider != null)
+        {
+            currentTargetCollider.enabled = true; // <-- HAREKET BAŞLADIĞI AN AÇ
+            Debug.Log($"Hedef Collider ({targetObject.name}) açıldı.");
+        }
+
+
+        // 3. Pathfinding'i başlat (konum, PathTarget objesinden alınır)
+        pathfinder.FindPath(transform.position, targetObject.transform.position);
         
         if (grid.path != null && grid.path.Count > 0)
         {
@@ -60,28 +81,30 @@ public class Unit : MonoBehaviour
         } 
         else 
         {
-            Debug.LogWarning("Yol bulunamadı veya hedef geçilemez. Hareket başlatılamadı.");
+            Debug.LogWarning("Yol bulunamadı! NPC hareket edemiyor.");
             gameManager.isNPCMoving = false;
-            SetWalking(false); 
+            
+            // Yol bulunamazsa collider'ı kapat
+            if (currentTargetCollider != null)
+            {
+                currentTargetCollider.enabled = false; 
+                currentTargetCollider = null; 
+            }
         }
     }
 
     private IEnumerator FollowPath()
     {
         gameManager.isNPCMoving = true;
-        SetWalking(true); // Yürüme animasyonunu başlat
+        SetWalking(true); 
 
         while (targetIndex < currentPath.Count)
         {
             Vector3 currentTargetNodePos = currentPath[targetIndex].worldPosition;
-            
-            // Düğüm merkezine olan yön vektörünü hesapla
             Vector2 direction = (currentTargetNodePos - transform.position).normalized;
             
-            // Hareket Yönünü Animator'a Gönder
-            SetDirection(direction.x, direction.y); // <-- YENİ KONTROL FONKSİYONU
+            SetDirection(direction.x, direction.y); 
 
-            // Düğüme ulaşana kadar hareket et
             while (Vector2.Distance(transform.position, currentTargetNodePos) > minDistanceToNode)
             {
                 transform.position = Vector2.MoveTowards(
@@ -89,28 +112,31 @@ public class Unit : MonoBehaviour
                     currentTargetNodePos, 
                     moveSpeed * Time.deltaTime
                 );
-                // Hareket sırasında yönü sürekli güncelle (Bu, Blend Tree'yi canlandırır)
                 direction = (currentTargetNodePos - transform.position).normalized;
                 SetDirection(direction.x, direction.y);
                 
                 yield return null; 
             }
 
-            // Düğüme ulaşıldı, bir sonraki düğüme geç
             targetIndex++;
         }
 
         // SON: Hedefe ulaşıldı
         gameManager.isNPCMoving = false;
-        SetWalking(false); // Yürüme animasyonunu durdur
+        SetWalking(false); 
         
-        // Son duruş yönünü koru (Idle animasyonunun son baktığı yönde kalması için)
+        // 🚨 HEDEFE ULAŞILDI: COLLIDER'I KAPAT
+        if (currentTargetCollider != null)
+        {
+            currentTargetCollider.enabled = false; 
+            Debug.Log($"Hedef Collider ({currentTargetCollider.gameObject.name}) kapatıldı.");
+            currentTargetCollider = null; // Temizle
+        }
         
         grid.path = null;
         currentPath = null;
     }
 
-    // Yürüme durumunu ayarlayan yardımcı metot
     private void SetWalking(bool isWalking)
     {
         if (animator != null)
@@ -119,15 +145,12 @@ public class Unit : MonoBehaviour
         }
     }
 
-    // Karakterin yönünü Animator parametreleri aracılığıyla ayarlayan yardımcı metot
     private void SetDirection(float horizontalInput, float verticalInput)
     {
         if (animator != null)
         {
-            // Animator'a X ve Y yönlerini iletir
-            // Blend Tree, bu değerlere bakarak hangi animasyonu oynatacağına karar verir.
-            animator.SetFloat("moveY", horizontalInput);
-            animator.SetFloat("moveX", verticalInput);
+            animator.SetFloat("moveX", horizontalInput);
+            animator.SetFloat("moveY", verticalInput);
         }
     }
 }
