@@ -3,15 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random; 
 using System.Collections;
-using UnityEngine.SceneManagement; 
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
     [Header("Rastgele Hedefler")]
+    [Tooltip("NPC'nin rastgele seçilerek gidebileceği tüm hedef noktalarının listesi.")]
     public List<PathTarget> availableTargets = new List<PathTarget>();
     
+    // PathTarget tipinde Hash Set
     private HashSet<PathTarget> usedTargets = new HashSet<PathTarget>(); 
     
     public PathTarget finalDestinationTarget; 
@@ -19,15 +21,26 @@ public class GameManager : MonoBehaviour
     private bool finalDestinationReached = false; 
 
     [Header("Otomatik Tetikleme Ayarları")]
+    [Tooltip("NPC bir hedefe ulaştıktan sonra diğerini tetiklemeden önceki bekleme süresi (SABİT DÖNGÜ BEKLEMESİ - Örn: 5s).")]
     public float timeBetweenMovements = 5f; 
+    
+    [Tooltip("NPC bir RASTGELE hedefe ulaştığında Minigame'in açık kalma süresi (20 saniye).")]
     public float timeAfterRandomTargetReached = 20f; // MİNİGAME SÜRESİ
-    public Vector2 randomDelayRange = new Vector2(3f, 8f); 
+
+    [Tooltip("NPC'nin hareket etmesi için ne kadar beklenecek (Min/Max saniye).")]
+    public Vector2 randomDelayRange = new Vector2(3f, 8f); // Artık kullanılmıyor
 
     public event Action<PathTarget> OnNPCWalkToLocation; 
     public event Action<bool> OnMinigameStatusChange; 
+    
+    // YENİ EKLENTİ: Kart Sistemi Eventi
+    public event Action OnCardCountUpdated; 
 
     public bool isNPCMoving = false;
     public int mana = 0;
+    
+    // YENİ EKLENTİ: Kart Sayısı
+    public int cardsPurchasedCount = 0;
     
     private bool firstRun = true; 
     private bool minigameIsPending = false; 
@@ -83,12 +96,12 @@ public class GameManager : MonoBehaviour
                 SelectAndTriggerRandomTarget();
                 continue; 
             }
-            
-            // --- Normal Minigame Beklemesi (Son hedeften sonra da çalışmalı) ---
-            
-            // Eğer tüm hedefler tamamlandıysa, Minigame zaten oynanmış/oynanıyor olmalı.
-            // Bu kontrolü burada yapmıyoruz, aşağıda SelectAndTriggerRandomTarget'tan sonra yapacağız.
 
+            // --- Minigame/Wait Mantığı Başlar ---
+            
+            // DİKKAT: Burada Final kontrolü yaparsak, son Minigame atlanır.
+            // Bu yüzden Minigame mantığı koşulsuz olarak çalıştırılmalı.
+            
             float waitTime = timeAfterRandomTargetReached; 
             
             minigameIsPending = true; 
@@ -105,14 +118,15 @@ public class GameManager : MonoBehaviour
             // Eğer süre dolduysa (ve SuccessTrigger tarafından kesilmediyse)
             if (minigameIsPending)
             {
+                 // PUZZLE'I KAPAT KOMUTU (Süre bittiği için)
                  OnMinigameStatusChange?.Invoke(false);
                  Debug.Log("Minigame KAPANDI. Süre doldu.");
                  minigameIsPending = false;
             }
 
-            // 3. Kontrol ve sonraki hareketi tetikle
+            // 3. KONTROL VE HAREKET: Süre dolduktan sonra Final kontrolü yapılır
             
-            // Eğer tüm hedefler bittiyse (son Minigame oynandı), Final'a git
+            // HEDEFLER BİTTİYSE, FİNAL HAREKETİNİ BAŞLAT
             if (usedTargets.Count >= availableTargets.Count)
             {
                 StartFinalMovement();
@@ -124,7 +138,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Bu metot sadece rastgele hedefler bitmediği sürece yeni hedef seçer.
     public void SelectAndTriggerRandomTarget()
     {
         // Hedefler bittiyse, bir şey yapma (Final RandomMovementCycle içinde tetiklenecek)
@@ -156,18 +169,34 @@ public class GameManager : MonoBehaviour
         }
     }
     
+    // --- KART SİSTEMİ METOTLARI ---
+    
+    // YENİ EKLENTİ: Final Kart'ın satın alınabilir olup olmadığını kontrol eder
+    public bool CanPurchaseFinalCard(int totalCardsInShop)
+    {
+        return cardsPurchasedCount >= (totalCardsInShop - 1); 
+    }
+
     public void BuyCard(PainSO cardToBuy)
     {
         if (mana >= cardToBuy.manaRequirement)
         {
             mana -= cardToBuy.manaRequirement;
-            Debug.Log($"SATIN ALMA BAŞARILI: Kalan Mana: {mana}");
+            // YENİ EKLENTİ: Kart sayacını artır
+            cardsPurchasedCount++;
+            
+            Debug.Log($"SATIN ALMA BAŞARILI: Kalan Mana: {mana}. Toplam Kart: {cardsPurchasedCount}");
+
+            // YENİ EKLENTİ: Kart sayımı değişti olayını tetikle
+            OnCardCountUpdated?.Invoke(); 
         }
         else
         {
             Debug.Log("Yeterli Mana yok.");
         }
     }
+    
+    // --- FİNAL HAREKETİ METOTLARI ---
     
     private void StartFinalMovement()
     {
