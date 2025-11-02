@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: ca6cad14bba18fb4e93834cbe7ebbe1b
+guid: d95c93bf96ffca345b3a887d2e9fcaf2
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 3352499394919985894
-    second: tofas_topview_blue1_0
+      213: -2684248774473962775
+    second: tofas_topview_white2_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: tofas_topview_blue1_0
+      name: tofas_topview_white2_0
       rect:
         serializedVersion: 2
         x: 12
-        y: 8
+        y: 6
         width: 47
-        height: 114
+        height: 117
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 6e2fae7ff68768e20800000000000000
-      internalID: 3352499394919985894
+      spriteID: 9eaa3bc16f1afbad0800000000000000
+      internalID: -2684248774473962775
       vertices: []
       indices: 
       edges: []
@@ -134,8 +134,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      tofas_topview_blue1_0: 3352499394919985894
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
