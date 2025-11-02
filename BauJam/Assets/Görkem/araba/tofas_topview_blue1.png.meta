@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: ca6cad14bba18fb4e93834cbe7ebbe1b
+guid: ddecb57cb52db25419f558b2a3ce5fe0
 TextureImporter:
   internalIDToNameTable:
   - first:
@@ -134,8 +134,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      tofas_topview_blue1_0: 3352499394919985894
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
