@@ -11,13 +11,7 @@ public class QTEController : MonoBehaviour
     public static event Action<bool, Trigger> OnQTEFinished; // <-- KRİTİK GÜNCELLEME
 
     public static bool isGamePaused = false;
-
-    [Header("UI Elemanları")]
-    public GameObject qtePanel;
-    public Slider timerSlider;
-    public TextMeshProUGUI sayacText;
-    public TextMeshProUGUI sonucText;
-    public GameObject basarisizHerifTextObjesi;
+    
 
     [Header("QTE Ayarları")]
     public float qteSuresi = 5f;
@@ -30,10 +24,6 @@ public class QTEController : MonoBehaviour
 
     void Start()
     {
-        // Başlangıçta tüm görsel öğeleri kapatalım
-        if (qtePanel != null) qtePanel.SetActive(false);
-        if (sonucText != null) sonucText.gameObject.SetActive(false);
-        if (basarisizHerifTextObjesi != null) basarisizHerifTextObjesi.SetActive(false);
         if (qteObject != null) qteObject.SetActive(false);
     }
 
@@ -67,19 +57,14 @@ public class QTEController : MonoBehaviour
     public IEnumerator BaslatQTE()
     {
         tiklamaSayisi = 0; 
-        sayacText.text = "0 / ";
         
-        // Asıl paneli aç
-        if (qtePanel != null) qtePanel.SetActive(true); 
-        // Slider'ı başlangıç değerine ayarla
-        if (timerSlider != null) timerSlider.maxValue = qteSuresi;
         
         float kalanZaman = qteSuresi;
         while (kalanZaman > 0)
         {
             kalanZaman -= Time.deltaTime;
             // Slider ve zamanı güncelle
-            if (timerSlider != null) timerSlider.value = kalanZaman;
+            
             yield return null;
         }
         DegerlendirSonucu();
@@ -94,13 +79,12 @@ public class QTEController : MonoBehaviour
             {
                  GameManager.Instance.mana++; // Mana'yı artır
             }
-            sayacText.text = tiklamaSayisi + " / ";
         }
     }
 
     private void DegerlendirSonucu()
     {
-        if (qtePanel != null) qtePanel.SetActive(false);
+       
         
         // 🚨 Başarı Kriteri: En az 1 tıklama yapıldıysa başarılı say
         if (tiklamaSayisi >= 1)
@@ -131,18 +115,18 @@ public class QTEController : MonoBehaviour
 
     private IEnumerator GosterSonucMesaji()
     {
-        if (sonucText != null) sonucText.gameObject.SetActive(true);
+        
         yield return new WaitForSeconds(1f); 
-        if (sonucText != null) sonucText.gameObject.SetActive(false);
+       
         QTE_Sonlandir();
     }
 
     private IEnumerator GosterBasarisizMesaji()
     {
         isGamePaused = true;
-        if (basarisizHerifTextObjesi != null) basarisizHerifTextObjesi.SetActive(true); 
+        
         yield return new WaitForSeconds(2f);
-        if (basarisizHerifTextObjesi != null) basarisizHerifTextObjesi.SetActive(false); 
+       
         isGamePaused = false;
         QTE_Sonlandir(); 
     }

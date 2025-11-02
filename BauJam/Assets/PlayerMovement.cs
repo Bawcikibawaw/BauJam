@@ -15,9 +15,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float kaymaMesafesi = 5f;
     [SerializeField] private float minFirlatmaGucu = 2f;
     private float mevcutFirlatmaGucu;
-
-    [Header("Işınlanma")]
-    [SerializeField] private Transform isinlanmaHedefi;
+    
 
 
     void Awake()
@@ -46,14 +44,13 @@ public class PlayerMovement : MonoBehaviour
         if (collision.gameObject.CompareTag("Player") && collision.contacts[0].normal.y < -0.5f)
         {
             Rigidbody2D kupRb = collision.gameObject.GetComponent<Rigidbody2D>();
+            GameManager.Instance.mana += 10;
             if (kupRb != null)
             {
                 // --- SORUNU BULMAK İÇİN EKLENEN SATIR ---
                 // Her çarpışmada mevcut gücü ve minimum gücü konsola yazdır.
                 Debug.Log("Mevcut Güç: " + mevcutFirlatmaGucu + " | Işınlanma için Gerekli Minimum Güç: " + minFirlatmaGucu);
-
-                // 1. Platformu kaydır.
-                Kaydir();
+                
 
                 // 2. Küpü zıplat veya ışınla.
                 // Eğer mevcut güç, minimum güçten BÜYÜK veya EŞİTSE zıplat.
@@ -64,15 +61,6 @@ public class PlayerMovement : MonoBehaviour
                 }
                 else // Değilse (yani mevcut güç minimumun ALTINA DÜŞTÜYSE) ışınla.
                 {
-                    if (isinlanmaHedefi != null)
-                    {
-                        collision.transform.position = isinlanmaHedefi.position;
-                        Debug.Log("IŞINLANMA GERÇEKLEŞTİ!");
-                    }
-                    else
-                    {
-                        Debug.LogError("Işınlanma Hedefi (final) atanmamış! Lütfen script'e hedefi sürükleyin.");
-                    }
                     ResetTrampoline();
                 }
             }
@@ -99,12 +87,6 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void Kaydir()
-    {
-        float yon = Random.value < 0.5f ? -1f : 1f;
-        Vector2 hedefPozisyon = new Vector2(transform.position.x + (yon * kaymaMesafesi), transform.position.y);
-        transform.position = hedefPozisyon;
-    }
 
     private void ResetTrampoline()
     {
