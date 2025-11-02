@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Square
   - Circle
+  - Araba
   layers:
   - Default
   - TransparentFX
