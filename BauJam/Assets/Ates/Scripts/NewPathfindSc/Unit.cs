@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Collections; // Coroutine için gerekli
+using System.Collections;
 
 public class Unit : MonoBehaviour
 {
@@ -9,42 +9,37 @@ public class Unit : MonoBehaviour
     public float minDistanceToNode = 0.1f; 
 
     // Referanslar
+    private Animator animator; 
+    private SpriteRenderer spriteRenderer; 
     private PathFinding pathfinder; 
     private Grid grid;               
     private GameManager gameManager; 
     
-    // Yolu Takip Etme Değişkenleri
+    // ... (Yol Takip Değişkenleri)
     private List<Node> currentPath; 
     private int targetIndex;         
     
     private void Start()
     {
-        Debug.Log("UNIT SCRIPT BAŞLATILIYOR (Start metodu çalıştı)"); 
-    
-        // Referansları al
+        animator = GetComponent<Animator>();
+        // SpriteRenderer sadece Flip için gereklidir, eğer animasyonlarınızda Flip kullanacaksanız tutun.
+        spriteRenderer = GetComponent<SpriteRenderer>(); 
+
         pathfinder = FindObjectOfType<PathFinding>();
         grid = FindObjectOfType<Grid>();
         gameManager = GameManager.Instance; 
-    
-        // Hata Ayıklama Logları: Hangi referansın gelmediğini kontrol edelim
-        bool isPathfinderNull = pathfinder == null;
-        bool isGridNull = grid == null;
-        bool isGameManagerNull = gameManager == null;
-
-        if (isPathfinderNull || isGridNull || isGameManagerNull)
+        
+        if (pathfinder == null || grid == null || gameManager == null || animator == null)
         {
-            // Eğer bu log çıkmıyorsa, koşulunuz yanlış demektir.
-            Debug.LogError($"[KRİTİK HATA] Unit Referansları Eksik! GM: {!isGameManagerNull}, Grid: {!isGridNull}, PF: {!isPathfinderNull}.");
+            Debug.LogError($"[FATAL] Unit Referansları Eksik! Kontrol edin. Unit devre dışı bırakıldı.");
             enabled = false; 
             return;
         }
-    
-        // Eğer tüm referanslar alındıysa, ABONE OL
+        
         gameManager.OnNPCWalkToLocation += OnWalkToLocationRequested;
-        Debug.Log("UNIT Başarıyla Abone Oldu ve Tüm Referanslar Alındı."); // ABONE OLMA BAŞARISI LOGU
     }
 
-    private void OnDestroy() // Obje yok edildiğinde aboneliği kaldır
+    private void OnDestroy() 
     {
         if (gameManager != null)
         {
@@ -52,75 +47,87 @@ public class Unit : MonoBehaviour
         }
     }
 
-    // 1. OnWalkToLocationRequested (GameManager'dan çağrılır)
-    // -----------------------------------------------------------------
     private void OnWalkToLocationRequested(Vector3 targetPosition)
     {
-        // Önceki Coroutine'i durdur
         StopAllCoroutines(); 
-        
-        // Yol bulma işlemini başlat
         pathfinder.FindPath(transform.position, targetPosition);
         
-        // Yol bulunduysa, takip etmeye başla
         if (grid.path != null && grid.path.Count > 0)
         {
             currentPath = grid.path;
             targetIndex = 0;
-            StartCoroutine(FollowPath()); // Coroutine'i başlat
+            StartCoroutine(FollowPath());
         } 
         else 
         {
             Debug.LogWarning("Yol bulunamadı veya hedef geçilemez. Hareket başlatılamadı.");
-            // Yol bulunamazsa, GameManager'a hareketin bittiğini bildir.
-            gameManager.isNPCMoving = false; 
+            gameManager.isNPCMoving = false;
+            SetWalking(false); 
         }
     }
 
-    // 2. FollowPath (Yolu takip eden ana Coroutine)
-    // ---------------------------------------------
     private IEnumerator FollowPath()
     {
-        // BAŞLANGIÇ: Hareketi başlat ve GameManager'a bildir
-        Debug.Log("--- Coroutine BAŞLADI ---");
         gameManager.isNPCMoving = true;
-        
-        // Güvenlik kontrolü: Hız sıfırsa hareket edemez
-        if (moveSpeed <= 0) {
-            Debug.LogError("Hareket Hızı (moveSpeed) sıfır veya negatif! NPC hareket edemez.");
-            gameManager.isNPCMoving = false;
-            yield break; // Coroutine'i durdur
-        }
+        SetWalking(true); // Yürüme animasyonunu başlat
 
         while (targetIndex < currentPath.Count)
         {
             Vector3 currentTargetNodePos = currentPath[targetIndex].worldPosition;
+            
+            // Düğüm merkezine olan yön vektörünü hesapla
+            Vector2 direction = (currentTargetNodePos - transform.position).normalized;
+            
+            // Hareket Yönünü Animator'a Gönder
+            SetDirection(direction.x, direction.y); // <-- YENİ KONTROL FONKSİYONU
 
             // Düğüme ulaşana kadar hareket et
             while (Vector2.Distance(transform.position, currentTargetNodePos) > minDistanceToNode)
             {
-                // Hata Ayıklama Logu: Hareketin her karede ilerlediğini görmek için
-                // Debug.Log($"Hareket Ediyor... Mesafe: {Vector2.Distance(transform.position, currentTargetNodePos):F3}");
-                
                 transform.position = Vector2.MoveTowards(
                     transform.position, 
                     currentTargetNodePos, 
                     moveSpeed * Time.deltaTime
                 );
-                yield return null; // Bir sonraki karede devam et
+                // Hareket sırasında yönü sürekli güncelle (Bu, Blend Tree'yi canlandırır)
+                direction = (currentTargetNodePos - transform.position).normalized;
+                SetDirection(direction.x, direction.y);
+                
+                yield return null; 
             }
 
-            // DÜĞÜM GEÇİŞ LOGU
-            Debug.Log($"Düğüme Ulaşıldı: Index {targetIndex}.");
+            // Düğüme ulaşıldı, bir sonraki düğüme geç
             targetIndex++;
         }
 
         // SON: Hedefe ulaşıldı
-        Debug.Log("--- Coroutine BİTTİ, Hedefe Ulaşıldı ---");
         gameManager.isNPCMoving = false;
+        SetWalking(false); // Yürüme animasyonunu durdur
         
-        // Debug için yolu temizle
+        // Son duruş yönünü koru (Idle animasyonunun son baktığı yönde kalması için)
+        
         grid.path = null;
         currentPath = null;
+    }
+
+    // Yürüme durumunu ayarlayan yardımcı metot
+    private void SetWalking(bool isWalking)
+    {
+        if (animator != null)
+        {
+            animator.SetBool("isMoving", isWalking);
+        }
+    }
+
+    // Karakterin yönünü Animator parametreleri aracılığıyla ayarlayan yardımcı metot
+    private void SetDirection(float horizontalInput, float verticalInput)
+    {
+        if (animator != null)
+        {
+            // Animator'a X ve Y yönlerini iletir
+            // Blend Tree, bu değerlere bakarak hangi animasyonu oynatacağına karar verir.
+            animator.SetFloat("moveY", horizontalInput);
+            animator.SetFloat("moveX", verticalInput);
+        }
     }
 }
