@@ -44,7 +44,6 @@ public class PlayerMovement : MonoBehaviour
         if (collision.gameObject.CompareTag("Player") && collision.contacts[0].normal.y < -0.5f)
         {
             Rigidbody2D kupRb = collision.gameObject.GetComponent<Rigidbody2D>();
-            GameManager.Instance.mana += 10;
             if (kupRb != null)
             {
                 // --- SORUNU BULMAK İÇİN EKLENEN SATIR ---

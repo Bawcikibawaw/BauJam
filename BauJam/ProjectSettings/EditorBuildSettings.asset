@@ -5,13 +5,13 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Ates/LVL1.unity
     guid: a2a63f822cf6b02488355b347a1381be
-  - enabled: 1
+  - enabled: 0
     path: Assets/Ates/PainManager.unity
     guid: 206168f10aadb1f44a5e561dc814ad66
-  - enabled: 1
+  - enabled: 0
     path: Assets/Ates/LVL2.unity
     guid: 06cd50dae57c1054a9c139a22baaad53
   - enabled: 1

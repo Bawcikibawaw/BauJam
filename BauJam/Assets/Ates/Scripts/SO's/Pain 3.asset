@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   painLevel: 5
   manaRequirement: 25
-  disclaimer: DEDEN
+  disclaimer: 
   card: {fileID: -5565403545470143733, guid: 81a2a8004cdebef459c69594e8736b38, type: 3}
   isFinalCard: 1

@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      tofas_topview_white2_0: -2684248774473962775
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
